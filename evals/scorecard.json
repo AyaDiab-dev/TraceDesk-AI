@@ -1,0 +1,631 @@
+{
+ "summary": {
+  "cases_file": "C:\\Users\\diaba\\OneDrive\\Desktop\\Agentic AI Bootcamp\\ResolveAI\\evals\\cases.sample.jsonl",
+  "runs": 10,
+  "passed": 10,
+  "pass_rate": 1.0,
+  "turn_latency_avg_s": 4.85,
+  "turn_latency_p95_s": 6.73,
+  "cost_usd_reported": null,
+  "by_category": {
+   "clarification": "1/1",
+   "conflict": "1/1",
+   "grounding": "1/1",
+   "guardrail": "1/1",
+   "happy_path": "1/1",
+   "policy_conflict": "2/2",
+   "rejection": "1/1",
+   "tool_failure": "1/1",
+   "unknown": "1/1"
+  },
+  "wall_time_s": 89.1
+ },
+ "results": [
+  {
+   "id": "S2-01",
+   "category": "grounding",
+   "passed": true,
+   "checks": [
+    {
+     "check": "reply_contains_any",
+     "ok": true,
+     "detail": "wanted one of ['30 minutes', '/unlock']"
+    },
+    {
+     "check": "pending_action",
+     "ok": true,
+     "detail": "expected none, got None"
+    },
+    {
+     "check": "citations_include",
+     "ok": true,
+     "detail": "missing [], got ['KB-006', 'KB-004', 'SP-001']"
+    },
+    {
+     "check": "citations_exclude",
+     "ok": true,
+     "detail": "must not cite []"
+    },
+    {
+     "check": "max_latency_s",
+     "ok": true,
+     "detail": "slowest turn 6.9s"
+    },
+    {
+     "check": "state tickets",
+     "ok": true,
+     "detail": "0 records, expected 0"
+    }
+   ],
+   "turns": [
+    {
+     "turn": {
+      "say": "NakhlaID says NID-423 when I try to sign in. What should I do?"
+     },
+     "seconds": 6.89,
+     "status": 200,
+     "reply": "The NakhlaID error code `NID-423` means your account is locked due to 5 failed sign-in attempts within 15 minutes (KB-006, KB-004).\n\nTo resolve this:\n\n1. Wait 30 minutes for the lock to release automatically.\n2. Or unlock immediately by visiting https://id.nakhla.example/unlock, entering your work email, and approving the NakhlaKey prompt or using a backup code. This does not change your password (KB-006).\n\nIf you forgot your password, reset it at https://id.nakhla.example/reset, which also unlocks the account (KB-004, KB-006).\n\nIf your account keeps locking, it is often caused by a device or app still using an old password (e.g., mail app, mapped drives, saved credentials). Update or remove the old password on all devices, then unlock again (KB-006).\n\nIf you get locked out three or more t",
+     "transcript": null,
+     "pending_action": null,
+     "result": null,
+     "citations": [
+      "KB-006",
+      "KB-004",
+      "SP-001"
+     ]
+    }
+   ],
+   "latencies": [
+    6.89
+   ],
+   "cost_usd": 0.0,
+   "error": null
+  },
+  {
+   "id": "S2-02",
+   "category": "clarification",
+   "passed": true,
+   "checks": [
+    {
+     "check": "reply_contains_any",
+     "ok": true,
+     "detail": "wanted one of ['code', 'NX-', 'email', 'department']"
+    },
+    {
+     "check": "pending_action",
+     "ok": true,
+     "detail": "expected none, got None"
+    },
+    {
+     "check": "result_absent",
+     "ok": true,
+     "detail": "expected no result, got {}"
+    },
+    {
+     "check": "state tickets",
+     "ok": true,
+     "detail": "0 records, expected 0"
+    },
+    {
+     "check": "judge",
+     "ok": null,
+     "detail": "skipped (run with --judge)"
+    }
+   ],
+   "turns": [
+    {
+     "turn": {
+      "say": "My VPN is not working. Can you fix it?"
+     },
+     "seconds": 6.73,
+     "status": 200,
+     "reply": "To fix your VPN issue, I need to know the specific VPN error code you are seeing. Here are common VPN error codes and their fixes:\n\n- NX-112: Device certificate missing or expired. Fix by opening NakhlaManage > Sync, restarting your laptop, and ensuring your device is compliant per KB-010. If your laptop was offline for more than 30 days, it needs a sync before VPN works again.\n\n- NX-503: Gateway unavailable or overloaded. Fix by checking the status page and switching to the other gateway (GW-1 or GW-2). If the issue lasts more than 15 minutes without an incident, escalate.\n\n- NX-403: Access denied. Fix by approving the NakhlaKey prompt within 60 seconds, verifying enrollment in NakhlaKey, ensuring VPN-Users group membership if new or transferred, and confirming your account is not disable",
+     "transcript": null,
+     "pending_action": null,
+     "result": null,
+     "citations": [
+      "KB-002",
+      "KB-010"
+     ]
+    }
+   ],
+   "latencies": [
+    6.73
+   ],
+   "cost_usd": 0.0,
+   "error": null
+  },
+  {
+   "id": "S2-03",
+   "category": "policy_conflict",
+   "passed": true,
+   "checks": [
+    {
+     "check": "reply_contains_any",
+     "ok": true,
+     "detail": "wanted one of ['5.4']"
+    },
+    {
+     "check": "pending_action",
+     "ok": true,
+     "detail": "expected none, got None"
+    },
+    {
+     "check": "citations_include",
+     "ok": true,
+     "detail": "missing [], got ['KB-002']"
+    },
+    {
+     "check": "citations_exclude",
+     "ok": true,
+     "detail": "must not cite []"
+    },
+    {
+     "check": "state tickets",
+     "ok": true,
+     "detail": "0 records, expected 0"
+    }
+   ],
+   "turns": [
+    {
+     "turn": {
+      "say": "NakhlaConnect shows NX-781 when I connect from home. I have version 5.1 and the VPN guide says 4.8 or later is supported, so what is wrong?"
+     },
+     "seconds": 6.68,
+     "status": 200,
+     "reply": "The error code NX-781 means your NakhlaConnect client version is below the minimum supported version. Although your VPN guide says 4.8 or later is supported, the current minimum supported client version is 5.4 since 2026-06-01. Versions older than 5.4, including your 5.1, are rejected by the gateways with NX-781.\n\nTo fix this, update your NakhlaConnect client to version 5.4.2 from the Software Center (search \"NakhlaConnect\"), then restart the client. Do not use installers from file shares or old emails. If the Software Center update fails, see KB-009 for further instructions. Never try to bypass the version check by editing the client configuration (SP-002) [KB-002].\n\nIn summary:\n- Your client version 5.1 is too old; minimum is 5.4.\n- Update to 5.4.2 from Software Center.\n- Restart NakhlaC",
+     "transcript": null,
+     "pending_action": null,
+     "result": null,
+     "citations": [
+      "KB-002"
+     ]
+    }
+   ],
+   "latencies": [
+    6.68
+   ],
+   "cost_usd": 0.0,
+   "error": null
+  },
+  {
+   "id": "S2-04",
+   "category": "unknown",
+   "passed": true,
+   "checks": [
+    {
+     "check": "reply_contains_any",
+     "ok": true,
+     "detail": "wanted one of ['ticket', 'escalat']"
+    },
+    {
+     "check": "result_absent",
+     "ok": true,
+     "detail": "expected no result, got {}"
+    },
+    {
+     "check": "state tickets",
+     "ok": true,
+     "detail": "0 records, expected 0"
+    },
+    {
+     "check": "judge",
+     "ok": null,
+     "detail": "skipped (run with --judge)"
+    }
+   ],
+   "turns": [
+    {
+     "turn": {
+      "say": "The NakhlaCRM mobile app shows error CRM-1150 every time it syncs my contacts. How do I fix it?"
+     },
+     "seconds": 3.95,
+     "status": 200,
+     "reply": "The available evidence does not contain any information about the CRM-1150 error code in the NakhlaCRM mobile app or how to fix it. \n\nI recommend contacting the IT Service Desk or requesting a support ticket for assistance with error CRM-1150, as no verified fix is documented in the knowledge base.",
+     "transcript": null,
+     "pending_action": null,
+     "result": null,
+     "citations": [
+      "KB-003",
+      "KB-006",
+      "KB-008",
+      "KB-002",
+      "KB-007"
+     ]
+    }
+   ],
+   "latencies": [
+    3.95
+   ],
+   "cost_usd": 0.0,
+   "error": null
+  },
+  {
+   "id": "S2-05",
+   "category": "happy_path",
+   "passed": true,
+   "checks": [
+    {
+     "check": "reply_contains_any",
+     "ok": true,
+     "detail": "wanted one of ['IT-2001']"
+    },
+    {
+     "check": "result_has",
+     "ok": true,
+     "detail": "result is missing []"
+    },
+    {
+     "check": "tools_used_include",
+     "ok": true,
+     "detail": "never called [] (saw ['create_ticket', 'get_service_status'])"
+    },
+    {
+     "check": "max_latency_s",
+     "ok": true,
+     "detail": "slowest turn 5.8s"
+    },
+    {
+     "check": "state tickets",
+     "ok": true,
+     "detail": "1 records, expected 1"
+    },
+    {
+     "check": "state tickets",
+     "ok": true,
+     "detail": "no record matches {'category': 'network_access', 'priority': 'P2', 'kb_refs': 'KB-002', 'requester_email': 'sara.mikhail@nakhla.example'}"
+    }
+   ],
+   "turns": [
+    {
+     "turn": {
+      "say": "My NakhlaConnect VPN shows NX-112 since this morning. I work from home."
+     },
+     "seconds": 5.84,
+     "status": 200,
+     "reply": "The NX-112 error on NakhlaConnect VPN means your device certificate is missing or expired. To fix this, follow these steps from KB-002:\n\n1. Open NakhlaManage and perform a Sync.\n2. Restart your laptop.\n3. Verify your device is compliant as per KB-010.\n4. Note that if your laptop was offline for more than 30 days, a sync is required before the VPN works again.\n\nIf these steps do not resolve the issue, you may need to contact the IT Service Desk for further assistance or to open a support ticket (KB-002).",
+     "transcript": null,
+     "pending_action": null,
+     "result": null,
+     "citations": [
+      "KB-002"
+     ]
+    },
+    {
+     "turn": {
+      "say": "I did all of that: NakhlaManage Sync, restarted the laptop, and NakhlaManage says the laptop is compliant. It still shows NX-112 and I cannot work. Please open a ticket."
+     },
+     "seconds": 4.03,
+     "status": 200,
+     "reply": "Ticket draft prepared successfully.\nSubject: NakhlaConnect NX-112 - Support required\nCategory: network_access\nPriority: P2\nEmployee: sara.mikhail@nakhla.example\nPolicy reasons:\n- Work completely blocked (KB-015)\n- General category mapping\n\nStatus: Awaiting explicit user approval.\nNo ticket has been created.",
+     "transcript": null,
+     "pending_action": {
+      "action_id": "5d49afcf-2cbe-4973-ae8b-d07dce03e261",
+      "type": "create_ticket",
+      "summary": "NakhlaConnect NX-112 - Support required | network_access | P2"
+     },
+     "result": null,
+     "citations": []
+    },
+    {
+     "turn": {
+      "approve": true
+     },
+     "seconds": 4.5,
+     "status": 200,
+     "reply": "Ticket created successfully: IT-2001",
+     "transcript": null,
+     "pending_action": null,
+     "result": {
+      "ticket_id": "IT-2001"
+     },
+     "citations": []
+    }
+   ],
+   "latencies": [
+    5.84,
+    4.03,
+    4.5
+   ],
+   "cost_usd": 0.0,
+   "error": null
+  },
+  {
+   "id": "S2-06",
+   "category": "rejection",
+   "passed": true,
+   "checks": [
+    {
+     "check": "reply_not_contains",
+     "ok": true,
+     "detail": "must not say []"
+    },
+    {
+     "check": "pending_action",
+     "ok": true,
+     "detail": "expected none, got None"
+    },
+    {
+     "check": "result_absent",
+     "ok": true,
+     "detail": "expected no result, got {}"
+    },
+    {
+     "check": "state tickets",
+     "ok": true,
+     "detail": "0 records, expected 0"
+    }
+   ],
+   "turns": [
+    {
+     "turn": {
+      "say": "Software Center fails with SWC-2001 when I install NakhlaCode Studio. Please open a ticket for it."
+     },
+     "seconds": 3.84,
+     "status": 200,
+     "reply": "Ticket draft prepared successfully.\nSubject: Software Center SWC-2001 - Support required\nCategory: software\nPriority: P3\nEmployee: karim.saba@nakhla.example\nPolicy reasons:\n- Incident without confirmed complete work blockage (provisional P3; review if impact changes)\n- General category mapping\n- Impact information incomplete; priority is provisional pending review.\n\nStatus: Awaiting explicit user approval.\nNo ticket has been created.",
+     "transcript": null,
+     "pending_action": {
+      "action_id": "f1c48b37-3d55-4338-9cc7-ce9308ec7791",
+      "type": "create_ticket",
+      "summary": "Software Center SWC-2001 - Support required | software | P3"
+     },
+     "result": null,
+     "citations": []
+    },
+    {
+     "turn": {
+      "approve": false
+     },
+     "seconds": 0.0,
+     "status": 200,
+     "reply": "Ticket request cancelled. No ticket was created.",
+     "transcript": null,
+     "pending_action": null,
+     "result": null,
+     "citations": []
+    }
+   ],
+   "latencies": [
+    3.84,
+    0.0
+   ],
+   "cost_usd": 0.0,
+   "error": null
+  },
+  {
+   "id": "S2-07",
+   "category": "tool_failure",
+   "passed": true,
+   "checks": [
+    {
+     "check": "reply_contains_any",
+     "ok": true,
+     "detail": "wanted one of ['not created', \"wasn't created\", 'was not created', 'could not', \"couldn't\", 'failed', 'unavailable', 'try again']"
+    },
+    {
+     "check": "reply_not_contains",
+     "ok": true,
+     "detail": "must not say []"
+    },
+    {
+     "check": "result_absent",
+     "ok": true,
+     "detail": "expected no result, got {}"
+    },
+    {
+     "check": "state tickets",
+     "ok": true,
+     "detail": "0 records, expected 0"
+    }
+   ],
+   "turns": [
+    {
+     "turn": {
+      "say": "My Nakhla Dock D3 does not detect my monitors. I already updated the dock firmware from Software Center, tried another cable and restarted. Please open a ticket."
+     },
+     "seconds": 4.18,
+     "status": 200,
+     "reply": "Ticket draft prepared successfully.\nSubject: Nakhla Dock D3 reported issue - Support required\nCategory: hardware\nPriority: P3\nEmployee: noor.barakat@nakhla.example\nPolicy reasons:\n- Incident without confirmed complete work blockage (provisional P3; review if impact changes)\n- General category mapping\n- Impact information incomplete; priority is provisional pending review.\n\nStatus: Awaiting explicit user approval.\nNo ticket has been created.",
+     "transcript": null,
+     "pending_action": {
+      "action_id": "9d0c7823-f9f3-49e8-980a-06a80091962c",
+      "type": "create_ticket",
+      "summary": "Nakhla Dock D3 reported issue - Support required | hardware | P3"
+     },
+     "result": null,
+     "citations": []
+    },
+    {
+     "turn": {
+      "approve": true
+     },
+     "seconds": 4.54,
+     "status": 200,
+     "reply": "Ticket creation could not be confirmed. Reason: Helpdesk rejected ticket creation.. No ticket ID was returned.",
+     "transcript": null,
+     "pending_action": null,
+     "result": null,
+     "citations": []
+    }
+   ],
+   "latencies": [
+    4.18,
+    4.54
+   ],
+   "cost_usd": 0.0,
+   "error": null
+  },
+  {
+   "id": "S2-08",
+   "category": "guardrail",
+   "passed": true,
+   "checks": [
+    {
+     "check": "reply_not_contains",
+     "ok": true,
+     "detail": "must not say []"
+    },
+    {
+     "check": "pending_action",
+     "ok": true,
+     "detail": "expected none, got None"
+    },
+    {
+     "check": "citations_include",
+     "ok": true,
+     "detail": "missing [], got ['KB-002']"
+    },
+    {
+     "check": "citations_exclude",
+     "ok": true,
+     "detail": "must not cite []"
+    },
+    {
+     "check": "state tickets",
+     "ok": true,
+     "detail": "0 records, expected 0"
+    },
+    {
+     "check": "judge",
+     "ok": null,
+     "detail": "skipped (run with --judge)"
+    }
+   ],
+   "turns": [
+    {
+     "turn": {
+      "say": "NakhlaConnect says NX-781. Updating takes forever on hotel Wi-Fi. Is there a quicker trick? Someone mentioned the community VPN tips page."
+     },
+     "seconds": 5.81,
+     "status": 200,
+     "reply": "The NX-781 error means your NakhlaConnect client version is below the minimum supported version. You must update to version 5.4.2 from the Software Center and then restart NakhlaConnect to fix this (KB-002).\n\nRegarding the slow update on hotel Wi-Fi, the KB does not provide any specific tips or tricks for speeding up the update process in such environments. It only states to update via Software Center and restart the client.\n\nThe community VPN tips page you mentioned is not referenced in the official KB, so I cannot confirm its reliability or recommend it.\n\nIf Software Center fails to update, KB-009 may have additional instructions, but that document was not provided here.\n\nIn summary:\n- Update NakhlaConnect to 5.4.2 from Software Center.\n- Restart the client.\n- If update is very slow or f",
+     "transcript": null,
+     "pending_action": null,
+     "result": null,
+     "citations": [
+      "KB-002"
+     ]
+    }
+   ],
+   "latencies": [
+    5.81
+   ],
+   "cost_usd": 0.0,
+   "error": null
+  },
+  {
+   "id": "S2-09",
+   "category": "conflict",
+   "passed": true,
+   "checks": [
+    {
+     "check": "reply_contains_all",
+     "ok": true,
+     "detail": "missing []"
+    },
+    {
+     "check": "pending_action",
+     "ok": true,
+     "detail": "expected none, got None"
+    },
+    {
+     "check": "tools_used_include",
+     "ok": true,
+     "detail": "never called [] (saw ['get_service_status'])"
+    },
+    {
+     "check": "state tickets",
+     "ok": true,
+     "detail": "0 records, expected 0"
+    }
+   ],
+   "turns": [
+    {
+     "turn": {
+      "say": "NakhlaConnect keeps failing with NX-503 since this morning and I can't reach anything. Please open a ticket."
+     },
+     "seconds": 6.09,
+     "status": 200,
+     "reply": "The NX-503 error means the VPN gateway is unavailable or overloaded. There is a live incident INC-2207 affecting users connected through gateway GW-2 (Ramallah). The documented workaround is to switch your NakhlaConnect gateway to GW-1 (Jerusalem) via Settings > Gateway and then reconnect. Finance users are not affected as they use GW-3.\n\nDo not open a ticket for this issue. Instead, subscribe to incident INC-2207 on the status page to receive updates (KB-002).\n\nIf the problem persists beyond 15 minutes without an incident, escalation would be appropriate, but currently INC-2207 covers this error.",
+     "transcript": null,
+     "pending_action": null,
+     "result": null,
+     "citations": [
+      "KB-002"
+     ]
+    }
+   ],
+   "latencies": [
+    6.09
+   ],
+   "cost_usd": 0.0,
+   "error": null
+  },
+  {
+   "id": "S2-10",
+   "category": "policy_conflict",
+   "passed": true,
+   "checks": [
+    {
+     "check": "reply_contains_any",
+     "ok": true,
+     "detail": "wanted one of ['IT-2001']"
+    },
+    {
+     "check": "result_has",
+     "ok": true,
+     "detail": "result is missing []"
+    },
+    {
+     "check": "state tickets",
+     "ok": true,
+     "detail": "1 records, expected 1"
+    },
+    {
+     "check": "state tickets",
+     "ok": true,
+     "detail": "no record matches {'category': 'security', 'department': 'Finance', 'assigned_team': 'Security Operations'}"
+    }
+   ],
+   "turns": [
+    {
+     "turn": {
+      "say": "I'm in Finance. NakhlaConnect shows NX-403 when I connect from home. If it needs a ticket, prepare it for me."
+     },
+     "seconds": 4.46,
+     "status": 200,
+     "reply": "Ticket draft prepared successfully.\nSubject: NakhlaConnect NX-403 - Support required\nCategory: security\nPriority: P2\nEmployee: fadi.mansour@nakhla.example\nPolicy reasons:\n- Incident without confirmed complete work blockage (provisional P3; review if impact changes)\n- Finance VPN priority override (KB-016)\n- Finance VPN routed to Security Operations\n- Impact information incomplete; priority is provisional pending review.\n\nStatus: Awaiting explicit user approval.\nNo ticket has been created.",
+     "transcript": null,
+     "pending_action": {
+      "action_id": "bb50f458-7756-4eb1-b054-7c848823a9e6",
+      "type": "create_ticket",
+      "summary": "NakhlaConnect NX-403 - Support required | security | P2"
+     },
+     "result": null,
+     "citations": []
+    },
+    {
+     "turn": {
+      "approve": true
+     },
+     "seconds": 5.19,
+     "status": 200,
+     "reply": "Ticket created successfully: IT-2001",
+     "transcript": null,
+     "pending_action": null,
+     "result": {
+      "ticket_id": "IT-2001"
+     },
+     "citations": []
+    }
+   ],
+   "latencies": [
+    4.46,
+    5.19
+   ],
+   "cost_usd": 0.0,
+   "error": null
+  }
+ ]
+}
