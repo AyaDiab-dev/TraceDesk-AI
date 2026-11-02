@@ -375,6 +375,23 @@ def retrieve(query, top_k=5):
         selected.append(matching_result)
         selected_ids.add(chunk_id)
 
+        # Keep evidence for the requested error code, not other
+    # error-code procedures from the same KB article.
+    query_codes = extract_error_codes(query)
+
+    if query_codes:
+        selected = [
+            item
+            for item in selected
+            if not (
+                item["section"].startswith("Error codes /")
+                and not (
+                    extract_error_codes(item["section"])
+                    & query_codes
+                )
+            )
+        ]
+
     return selected
 
 

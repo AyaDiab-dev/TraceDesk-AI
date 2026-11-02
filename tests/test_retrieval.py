@@ -86,3 +86,51 @@ def test_authoritative_priority_policy_is_included():
     )
 
     assert len({item["chunk_id"] for item in results}) == len(results)
+
+@pytest.mark.integration
+def test_nx781_retrieval_excludes_unrelated_error_codes():
+    query = (
+        "NakhlaConnect shows NX-781. "
+        "My VPN client version is 5.1. What should I do?"
+    )
+
+    results = retrieve(query, top_k=5)
+
+    sections = {item["section"] for item in results}
+
+    assert "Error codes / NX-781" in sections
+    assert "Supported versions" in sections
+
+    unrelated_sections = {
+        "Error codes / NX-112",
+        "Error codes / NX-403",
+        "Error codes / NX-503",
+        "Error codes / NX-905",
+    }
+
+    assert sections.isdisjoint(unrelated_sections)
+@pytest.mark.integration
+def test_battery_question_excludes_unrelated_procedures():
+    query = (
+        "My laptop battery drains very quickly. "
+        "What should I do?"
+    )
+
+    results = retrieve(query, top_k=5)
+
+    assert any(
+        item["section"] == "Hardware problems"
+        for item in results
+    )
+
+    unrelated_sections = {
+        "Compliance rules",
+        "Nakhla-Corp does not connect",
+        "Push prompt not received (`MFA-201`)",
+        "Install from the catalogue",
+    }
+
+    assert all(
+        item["section"] not in unrelated_sections
+        for item in results
+    )

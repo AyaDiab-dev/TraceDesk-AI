@@ -15,9 +15,14 @@ STEP_PATTERNS = {
         r"(?:performed?|did)\s+(?:a\s+)?(?:nakhlamanage\s+)?sync)\b"
     ),
     "Restarted laptop": (
-        r"\b(?:restart(?:ed)?|reboot(?:ed)?)\s+"
-        r"(?:my\s+|the\s+)?(?:laptop|computer|device)\b"
-    ),
+        r"\b(?:"
+        r"(?:restart(?:ed)?|reboot(?:ed)?)\s+"
+        r"(?:(?:my|the)\s+)?(?:laptop|computer|device|macbook)"
+        r"|"
+        r"(?:i\s+)?(?:restart(?:ed)?|reboot(?:ed)?)\s+"
+        r"(?:it|my laptop|the laptop)"
+        r")\b"
+),
     "Checked device compliance": (
         r"\b(?:check(?:ed)?\s+(?:device\s+)?compliance|"
         r"(?:device|laptop)\s+(?:is\s+)?compliant|"
@@ -90,12 +95,21 @@ def extract_ticket_context(messages: list[dict]) -> dict:
         )
     )
 
+    is_laptop = bool(
+    re.search(
+        r"\b(?:laptop|notebook|computer|macbook)\b",
+        lower,
+    )
+)
+
     if is_dock:
         topic, service = "hardware", "Nakhla Dock D3"
     elif is_vpn:
         topic, service = "vpn", "NakhlaConnect"
     elif is_software:
         topic, service = "software", "Software Center"
+    elif is_laptop:
+        topic, service = "hardware", "Laptop"
     else:
         topic, service = "", ""
 
@@ -148,15 +162,25 @@ def extract_ticket_context(messages: list[dict]) -> dict:
     )
 
     malfunction = bool(
-        error_code
-        or re.search(
-            r"\b(?:broken|not working|fails?|failing|"
-            r"does not detect|doesn't detect|error|"
-            r"unable to connect|cannot connect|can't connect|"
-            r"connection failed|connection issue|"
-            r"not connecting|doesn't connect)\b",
-            lower,
-        )
+    error_code
+    or re.search(
+        r"\b(?:"
+        r"broken|not working|fails?|failing|"
+        r"does not detect|doesn't detect|error|"
+        r"unable to connect|cannot connect|can't connect|"
+        r"connection failed|connection issue|"
+        r"not connecting|doesn't connect|"
+        r"crash(?:es|ed|ing)?|"
+        r"overheat(?:s|ed|ing)?|"
+        r"freez(?:e|es|ing)|frozen|"
+        r"won't turn on|will not turn on|"
+        r"doesn't turn on|does not turn on|"
+        r"battery\s+(?:drains?|draining)|"
+        r"battery\s+(?:dies?|dying)|"
+        r"screen\s+flicker(?:s|ing)?"
+        r")\b",
+        lower,
+    )
 )
 
     if no_workaround:
