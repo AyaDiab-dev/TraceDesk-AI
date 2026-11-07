@@ -16,7 +16,7 @@ EXPECTED_DIMENSIONS = 1536
 
 
 def get_client():
-    load_dotenv(PROJECT_ROOT / ".env", override=True)
+    load_dotenv(PROJECT_ROOT / ".env", override=False)
 
     api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
     if not api_key:
@@ -81,7 +81,7 @@ def validate_vector(vector):
 
 
 def embed_chunks(chunks):
-    load_dotenv(PROJECT_ROOT / ".env", override=True)
+    load_dotenv(PROJECT_ROOT / ".env", override=False)
 
     model = os.getenv(
         "EMBEDDING_MODEL",

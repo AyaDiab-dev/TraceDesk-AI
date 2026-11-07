@@ -12,6 +12,7 @@ from retriever import (
     load_search_index,
     retrieve,
 )
+from evidence_filter import filter_relevant_evidence
 
 
 def test_search_index_excludes_inactive_documents():
@@ -59,16 +60,21 @@ def test_invalid_top_k_rejected():
 
 @pytest.mark.integration
 def test_vpn_exact_code_retrieval():
-    results = retrieve("My VPN shows NX-781. How do I fix it?", top_k=5)
+    results = retrieve(
+        "My VPN shows NX-781. How do I fix it?",
+        top_k=5,
+    )
 
     assert results
     assert results[0]["document_id"] == "KB-002"
     assert "NX-781" in results[0]["section"]
     assert results[0]["exact_code_boost"] == pytest.approx(0.30)
+
     assert all(
         result["metadata"]["status"] == "current"
         for result in results
     )
+
 
 @pytest.mark.integration
 def test_authoritative_priority_policy_is_included():
@@ -85,7 +91,10 @@ def test_authoritative_priority_policy_is_included():
         for item in results
     )
 
-    assert len({item["chunk_id"] for item in results}) == len(results)
+    assert len(
+        {item["chunk_id"] for item in results}
+    ) == len(results)
+
 
 @pytest.mark.integration
 def test_nx781_retrieval_excludes_unrelated_error_codes():
@@ -109,6 +118,8 @@ def test_nx781_retrieval_excludes_unrelated_error_codes():
     }
 
     assert sections.isdisjoint(unrelated_sections)
+
+
 @pytest.mark.integration
 def test_battery_question_excludes_unrelated_procedures():
     query = (
@@ -116,12 +127,20 @@ def test_battery_question_excludes_unrelated_procedures():
         "What should I do?"
     )
 
-    results = retrieve(query, top_k=5)
+    # Stage 1: Retrieve candidate evidence.
+    candidates = retrieve(query, top_k=5)
+
+    assert candidates
 
     assert any(
         item["section"] == "Hardware problems"
-        for item in results
+        for item in candidates
     )
+
+    # Stage 2: Filter evidence for relevance.
+    evidence = filter_relevant_evidence(query, candidates)
+
+    assert evidence, "No relevant evidence survived filtering"
 
     unrelated_sections = {
         "Compliance rules",
@@ -130,7 +149,19 @@ def test_battery_question_excludes_unrelated_procedures():
         "Install from the catalogue",
     }
 
+    # Unrelated procedures must not survive filtering.
     assert all(
         item["section"] not in unrelated_sections
-        for item in results
+        for item in evidence
+    )
+
+    # Final evidence must originate from retrieved candidates.
+    candidate_ids = {
+        item["chunk_id"]
+        for item in candidates
+    }
+
+    assert all(
+        item["chunk_id"] in candidate_ids
+        for item in evidence
     )

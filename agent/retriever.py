@@ -54,7 +54,7 @@ def cosine_similarity(vector_a, vector_b):
 
 def load_search_index():
     """Load eligible KB chunks and their cached embeddings."""
-    load_dotenv(PROJECT_ROOT / ".env", override=True)
+    load_dotenv(PROJECT_ROOT / ".env", override=False)
 
     model = os.getenv(
         "EMBEDDING_MODEL",
@@ -275,7 +275,7 @@ def retrieve(query, top_k=5):
 
     index = load_search_index()
 
-    load_dotenv(PROJECT_ROOT / ".env", override=True)
+    load_dotenv(PROJECT_ROOT / ".env", override=False)
 
     client = OpenAI(
         api_key=os.environ["OPENROUTER_API_KEY"].strip(),

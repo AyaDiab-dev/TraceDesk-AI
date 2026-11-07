@@ -79,6 +79,38 @@ def split_error_code_table(chunk: dict) -> list[dict]:
     result.extend(error_chunks)
     return result
 
+def split_hardware_problems(chunk: dict) -> list[dict]:
+    """Split independent hardware policies into separate evidence chunks."""
+    lines = chunk["text"].splitlines()
+
+    items = []
+    current_item = []
+
+    for line in lines:
+        if line.lstrip().startswith("- **"):
+            if current_item:
+                items.append("\n".join(current_item).strip())
+            current_item = [line]
+        elif current_item:
+            current_item.append(line)
+        elif line.strip():
+            # Preserve introductory text if present.
+            current_item = [line]
+
+    if current_item:
+        items.append("\n".join(current_item).strip())
+
+    if len(items) <= 1:
+        return [chunk]
+
+    return [
+        {
+            **chunk,
+            "chunk_id": "",
+            "text": item,
+        }
+        for item in items
+    ]
 
 def split_into_sections(document: dict) -> list[dict]:
     """Split a document by headings and selected structured tables."""
@@ -117,6 +149,13 @@ def split_into_sections(document: dict) -> list[dict]:
         # Special handling for the structured VPN error-code table.
         if document["id"] == "KB-002" and section_title.lower() == "error codes":
             chunks.extend(split_error_code_table(chunk))
+
+        elif (
+            document["id"] == "KB-010"
+            and section_title.lower() == "hardware problems"
+        ):
+            chunks.extend(split_hardware_problems(chunk))
+
         else:
             chunks.append(chunk)
 

@@ -18,6 +18,7 @@ from approval_store import ApprovalStore  # noqa: E402
 from ticket_submitter import TicketSubmitter  # noqa: E402
 from session_store import SessionStore  # noqa: E402
 from ticket_context import extract_ticket_context  # noqa: E402
+from voice_intent import classify_wake_intent  # noqa: E402
 
 
 app = FastAPI(title="ResolveAI API", version="1.0")
@@ -72,6 +73,9 @@ class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=2000)
     user: ChatUser | None = None
 
+class VoiceWakeRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=500)
+
 class ApproveRequest(BaseModel):
     session_id: str = Field(min_length=1, max_length=128)
     action_id: str = Field(min_length=1)
@@ -100,6 +104,16 @@ def health():
         "service": "resolveai",
     }
 
+@app.post("/api/voice/wake-intent")
+def voice_wake_intent(request: VoiceWakeRequest):
+    """Classify a transcript without invoking the agent or tools."""
+    decision = classify_wake_intent(request.text)
+
+    return {
+        "intent": decision.intent.value,
+        "should_wake": decision.should_wake,
+        "reason": decision.reason,
+    }
 
 def prepare_ticket_fields(context: dict, messages: list[dict]) -> dict:
     """Prepare a ticket description from supported conversation facts."""
@@ -173,10 +187,12 @@ def official_chat(request: ChatRequest):
         request.message,
     )
 
-    full_history = conversation_history + [{
-        "role": "user",
-        "content": request.message,
-    }]
+    # Keep a short window for LangGraph,
+    # but preserve the full session for ticket extraction.
+    full_history = [
+        *session["messages"],
+        {"role": "user", "content": request.message},
+    ]
 
     ticket_context = extract_ticket_context(full_history)
     ticket_fields = prepare_ticket_fields(

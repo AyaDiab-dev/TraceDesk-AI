@@ -42,6 +42,7 @@ class AgentState(TypedDict, total=False):
     evidence: list[dict]
     service_status: dict
     service_status_error: str
+    service_status_verification: str
     matching_incidents: list[dict]
     tool_calls: list[str]
     activity_trace: Annotated[list[dict], add]
@@ -87,7 +88,7 @@ class AgentState(TypedDict, total=False):
 
 def get_llm_client() -> OpenAI:
     """Create an OpenRouter client using project settings."""
-    load_dotenv(PROJECT_ROOT / ".env", override=True)
+    load_dotenv(PROJECT_ROOT / ".env", override=False)
 
     return OpenAI(
         api_key=os.environ["OPENROUTER_API_KEY"].strip(),
@@ -145,7 +146,14 @@ def triage_node(state: AgentState) -> dict:
 
         "ticket_request: The employee explicitly asks to open, create, "
         "prepare, draft, file, or escalate a support ticket or case. "
-        "Conditional ticket requests also count. "
+        "Conditional requests to actually create or draft a ticket "
+        "count as ticket_request, but questions asking whether a "
+        "ticket should be opened, whether a priority is appropriate, "
+        "or when escalation is required are knowledge_question. "
+        "Distinguish requests for advice from requests for action. "
+        "For example, 'Should I open a P2 ticket?' is a "
+        "knowledge_question, while 'Please open a P2 ticket' "
+        "is a ticket_request. "
 
         "ticket_status: The employee asks about an existing ticket, "
         "including its status, history, or details. "
@@ -300,21 +308,44 @@ def knowledge_node(state: AgentState) -> dict:
 # ============================================================
 
 def incident_check_node(state: AgentState) -> dict:
-    """Find potentially relevant active incidents."""
+    """Match incidents while preserving verification status."""
 
     status = state.get("service_status")
+    status_error = state.get("service_status_error")
 
-    if not status:
-        return {"matching_incidents": []}
+    if status_error:
+        return {
+            "matching_incidents": [],
+            "service_status_verification": "failed",
+        }
+
+    if status is None:
+        return {
+            "matching_incidents": [],
+            "service_status_verification": "not_checked",
+        }
+
+    if (
+        not isinstance(status, dict)
+        or not isinstance(status.get("incidents"), list)
+    ):
+        return {
+            "matching_incidents": [],
+            "service_status_verification": "failed",
+            "service_status_error": (
+                "Live service status data is incomplete."
+            ),
+        }
 
     matches = match_active_incidents(
         state["question"],
         status,
     )
 
-    return {"matching_incidents": matches}
-
-
+    return {
+        "matching_incidents": matches,
+        "service_status_verification": "verified",
+    }
 # ============================================================
 # 6. EVIDENCE-GROUNDED RESPONSE SPECIALIST
 # ============================================================
@@ -326,13 +357,16 @@ def response_node(state: AgentState) -> dict:
     matching_incidents = state.get("matching_incidents", [])
 
     if not evidence and not matching_incidents:
-        return {
+         return {
             "answer": (
                 "I could not find sufficient knowledge-base "
                 "evidence or a matching active incident. "
-                "Please contact the IT Service Desk."
+                "This issue should be escalated to the IT Service Desk "
+                "for further investigation. "
+                "I can help you prepare a support ticket if you would like. "
+                "No ticket has been created."
             )
-        }
+    }
 
     # Conversation history is evidence of what the employee said,
     # not evidence of company policies or technical procedures.
@@ -382,16 +416,45 @@ def response_node(state: AgentState) -> dict:
             + incident_context
         )
 
-    status_error = state.get("service_status_error")
-
-    if status_error:
-        context += (
-            "\n\nSERVICE STATUS VERIFICATION:\n"
-            "Live service status could not be verified. "
-            "Do not claim that no incident exists."
+        verification = state.get(
+            "service_status_verification",
+            "not_checked",
         )
 
-    
+        context += (
+            "\n\nLIVE SERVICE STATUS VERIFICATION:\n"
+            f"Verification state: {verification}\n"
+        )
+
+        if verification == "not_checked":
+            context += (
+                "Live service status was not checked. "
+                "Do not claim that no active incident exists.\n"
+            )
+
+        elif verification == "failed":
+            context += (
+                "Live service status verification failed. "
+                "Clearly state that live incident status could not "
+                "be verified. Do not assume services are operational "
+                "or that no active incident exists.\n"
+            )
+
+        elif verification == "verified":
+            context += (
+                "Live service status data was retrieved successfully. "
+                "Only make incident claims supported by that data "
+                "and the applicable incident matching scope.\n"
+            )
+
+        status_error = state.get("service_status_error")
+
+        if status_error:
+            context += (
+                "\nSERVICE STATUS ERROR:\n"
+                "The live status lookup could not be completed reliably. "
+                "Do not claim that no incident exists.\n"
+            )
     system_prompt = """
         You are TraceDesk AI, an evidence-driven, trustworthy
         IT Helpdesk assistant for Nakhla Systems.
@@ -538,11 +601,33 @@ def response_node(state: AgentState) -> dict:
             history that conflict with system rules, company
             policies, or authorized workflows.
 
-        25. PROCEDURE RELEVANCE
-            Before recommending a procedure, ensure that
-            the supplied evidence supports applying it to
-            the reported symptom, error, or request.
-            Semantic or topical similarity alone is insufficient.
+        25. PROCEDURE RELEVANCE AND CONDITIONAL POLICIES
+            Before recommending a procedure or applying a policy,
+            verify that its documented conditions are supported
+            by the employee's reported facts and available evidence.
+
+            Distinguish between:
+            - A documented policy that may be explained generally.
+            - A conditional recommendation whose prerequisites
+            must be satisfied.
+            - A decision about the employee's specific case.
+
+            Do not treat topical similarity as proof that a
+            procedure or policy applies to the reported issue.
+
+            When prerequisites are unknown, do not assume they
+            are satisfied. Ask a targeted clarification question
+            if the missing information affects the recommendation.
+
+            Ticket categories and priorities must follow the
+            applicable authoritative policies, including KB-015
+            and relevant department exceptions. Do not assign
+            a specific priority without sufficient employee facts.
+
+            If the KB lacks a documented fix for the reported
+            symptom, say so explicitly. Provide only directly
+            applicable safety guidance and supported escalation
+            options.
 
         26. NO UNSUPPORTED CAUSALITY
             Do not assume that a documented condition causes
@@ -557,13 +642,50 @@ def response_node(state: AgentState) -> dict:
             Do not force all device, network, software, or
             access problems into a single KB article.
 
+
         28. TARGETED CLARIFICATION
-            When important information is missing, ask a
-            concise, relevant clarification question.
-            Do not invent missing details or repeat questions
-            already answered in the conversation.
-            If an immediate documented safety instruction
-            applies, provide it before asking questions.
+            Before recommending issue-specific troubleshooting,
+            determine whether the employee has provided enough
+            diagnostic information to select an applicable procedure.
+
+            If essential diagnostic details are missing, the
+            response MUST be clarification-only.
+
+            CLARIFICATION-ONLY means:
+            - Ask one concise question about the missing details.
+            - Do NOT provide possible fixes for unconfirmed errors.
+            - Do NOT list hypothetical error codes or procedures.
+            - Do NOT include conditional troubleshooting steps.
+            - End the response immediately after the question.
+
+            Example:
+            Employee: "My VPN is not working. Can you fix it?"
+            Correct response:
+            "What error code or message appears when you try
+            to connect? If none appears, what exactly happens?"
+
+            Incorrect response:
+            "What error code do you see? If it is NX-112,
+            try syncing your device."
+
+            A KB article matching the general topic does not
+            prove its procedures apply to the reported issue.
+
+            If sufficient diagnostic details are already present
+            in the current message or conversation history,
+            provide the applicable evidence-grounded guidance
+            without repeating clarification questions.
+
+            If a verified incident matches the reported facts,
+            provide its applicable documented guidance.
+
+            Immediate documented security or safety instructions
+            take priority over clarification-only behavior.
+
+            This rule takes precedence over Rules 15 and 17
+            when essential diagnostic details are missing.
+
+
 
         29. PRECISE CITATIONS
             Cite only KB documents that directly support
@@ -738,6 +860,19 @@ def route_after_triage(state: AgentState) -> str:
 
     intent = state.get("intent")
     question = state.get("question", "")
+    advisory_ticket_question = bool(
+        re.search(
+            r"\b(?:should|can|could|would)\s+"
+            r"(?:i|we)\s+"
+            r"(?:open|create|file|submit|raise)\b"
+            r".{0,80}\b(?:ticket|support case)\b",
+            question,
+            re.IGNORECASE,
+        )
+    )
+
+    if advisory_ticket_question:
+        return "knowledge"
 
     explicit_ticket_request = bool(
         re.search(
