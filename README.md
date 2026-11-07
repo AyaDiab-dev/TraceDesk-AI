@@ -16,8 +16,23 @@ Rather than simply generating answers, TraceDesk AI is designed to check trusted
 - **Human approval gate:** Prepares ticket drafts and requires explicit approval before creating a ticket.
 - **Evidence & Trust Trace:** Presents supporting evidence and relevant decision information without exposing private model reasoning.
 - **Conversation experience:** Includes a React interface with employee identification and conversation-related features.
-- **Voice assistant:** Includes browser-based speech interaction and wake-phrase handling, subject to browser support and recognition limitations.
+- **Conversational Voice Assistant:** Goes beyond traditional speech-to-text by introducing a wake-phrase-driven, hands-free interaction experience. Employees can call TraceDesk AI by name to initiate a voice conversation, speak their IT support requests naturally, and receive spoken responses through browser-based speech recognition and text-to-speech. The feature is designed to make technical support feel more immediate, accessible, and conversational, while remaining subject to browser support and speech-recognition limitations.
 
+## Beyond Text: Conversational Voice Experience
+
+TraceDesk AI introduces a voice-first interaction layer designed to make IT support feel like a natural conversation rather than a traditional chatbot.
+
+Instead of relying exclusively on typing and clicking, employees can interact with the assistant through a combination of voice activation, spoken requests, and audible responses.
+
+**Voice interaction highlights:**
+
+- **Wake-phrase activation:** Designed to recognize a call to TraceDesk AI and initiate voice interaction without requiring a typed message.
+- **Natural spoken requests:** Employees can describe technical problems conversationally instead of filling out rigid forms.
+- **Spoken AI responses:** Text-to-speech allows the assistant to communicate its answers aloud.
+- **Conversation-oriented experience:** Voice interaction is integrated into the same support workflow as knowledge retrieval, incident checks, and ticket assistance.
+- **Trust and control:** Voice interaction does not bypass the human approval requirement for ticket creation.
+
+**Implementation note:** The voice experience uses browser-based speech capabilities. Wake-phrase recognition and continuous interaction depend on browser support, microphone permissions, and recognition accuracy. It is an experimental interaction feature rather than a guaranteed always-on voice service.
 ## Architecture
 
 ```text
