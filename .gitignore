@@ -22,3 +22,22 @@ Thumbs.db
 # Backup files
 *.backup.py
 *.bak
+# Local conversation history
+data/*.sqlite3
+data/*.sqlite3-shm
+data/*.sqlite3-wal
+
+# Generated embedding cache
+data/embeddings_cache.json
+
+# Frontend build and dependencies
+frontend/node_modules/
+frontend/dist/
+
+# Local backups
+frontend-backup-*/
+voice-safety-backup-*/
+frontend/src/*.voice-backup
+
+# Local evaluation snapshots
+evals/tickets_before_mentor_reset.json

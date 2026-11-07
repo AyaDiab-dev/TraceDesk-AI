@@ -1,14 +1,16 @@
+"""TraceDesk AI API: agent, demo employee lookup, and controlled ticket workflow.
 
-"""ResolveAI API - LangGraph agent and controlled ticket workflow."""
-import re
+Employee selection by email is for a LOCAL, NON-PUBLIC demo only.
+It does not authenticate the person who entered the email.
+"""
 import os
+import re
 import sys
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "agent"))
@@ -17,29 +19,201 @@ from graph import build_graph  # noqa: E402
 from approval_store import ApprovalStore  # noqa: E402
 from ticket_submitter import TicketSubmitter  # noqa: E402
 from session_store import SessionStore  # noqa: E402
+from conversation_repository import ConversationRepository  # noqa: E402
+from kb_loader import load_knowledge_base  # noqa: E402
 from ticket_context import extract_ticket_context  # noqa: E402
 from voice_intent import classify_wake_intent  # noqa: E402
+from mcp_client import lookup_employee, search_tickets, get_ticket  # noqa: E402
 
-
-app = FastAPI(title="ResolveAI API", version="1.0")
-
+app = FastAPI(title="TraceDesk AI API", version="1.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
     allow_credentials=False,
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
 )
 
+
+def normalize_demo_email(email: str) -> str:
+    """Normalize a Nakhla demo address (not proof of account ownership)."""
+    value = email.strip().casefold()
+    if not value or not re.fullmatch(r"[a-z0-9][a-z0-9._+-]*@nakhla\.example", value):
+        raise HTTPException(status_code=422, detail="Enter a valid Nakhla work email.")
+    return value
+
+
+def mcp_failure(result: dict, message: str) -> None:
+    """Translate MCP error envelopes to HTTP errors without leaking internals."""
+    error = result.get("error") or {}
+    code = error.get("code") if isinstance(error, dict) else None
+    if code in {"employee_not_found", "ticket_not_found"}:
+        raise HTTPException(status_code=404, detail="Record not found.")
+    raise HTTPException(status_code=502, detail=message)
+
+
+@app.get("/api/demo/employee")
+async def identify_demo_employee(email: str = Query(..., min_length=3)):
+    """Select a directory employee for a local demo; not authentication."""
+    normalized = normalize_demo_email(email)
+    try:
+        result = await lookup_employee(normalized)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Employee directory is unavailable.") from exc
+    if not isinstance(result, dict):
+        raise HTTPException(status_code=502, detail="Invalid directory response.")
+    if result.get("ok") is not True:
+        mcp_failure(result, "Unable to look up employee.")
+    employee = result.get("employee")
+    if not isinstance(employee, dict):
+        raise HTTPException(status_code=502, detail="Invalid employee response.")
+    return {"employee": employee, "mode": "local_demo"}
+
+
+@app.get("/api/my-tickets")
+async def list_my_tickets(
+    requester_email: str = Query(..., min_length=3),
+    q: str | None = Query(default=None, max_length=200),
+    status: str | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=50),
+):
+    """Read ticket archive for a selected demo employee (no real authentication)."""
+    email = normalize_demo_email(requester_email)
+    if status not in (None, "open", "resolved", "closed"):
+        raise HTTPException(status_code=422, detail="Invalid ticket status.")
+    try:
+        result = await search_tickets(
+            query=q, requester_email=email, status=status, limit=limit
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Unable to retrieve tickets.") from exc
+    if not isinstance(result, dict):
+        raise HTTPException(status_code=502, detail="Invalid tickets response.")
+    if result.get("ok") is not True:
+        mcp_failure(result, "Unable to retrieve tickets.")
+    tickets = result.get("tickets")
+    if not isinstance(tickets, list) or not all(isinstance(t, dict) for t in tickets):
+        raise HTTPException(status_code=502, detail="Invalid tickets response.")
+    # Defense-in-depth for demo filtering: never return records for another email.
+    own_tickets = [
+        ticket for ticket in tickets
+        if str(ticket.get("requester_email", "")).strip().casefold() == email
+    ]
+    return {
+        "tickets": own_tickets,
+        "count": len(own_tickets),
+        "total_matches": result.get("total_matches", len(own_tickets)),
+    }
+
+
+@app.get("/api/my-tickets/{ticket_id}")
+async def read_my_ticket(
+    ticket_id: str,
+    requester_email: str = Query(..., min_length=3),
+):
+    """Read a ticket only if it matches the selected local demo employee."""
+    email = normalize_demo_email(requester_email)
+    try:
+        result = await get_ticket(ticket_id)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Unable to retrieve ticket details.") from exc
+    if not isinstance(result, dict):
+        raise HTTPException(status_code=502, detail="Invalid ticket response.")
+    if result.get("ok") is not True:
+        mcp_failure(result, "Unable to retrieve ticket details.")
+    ticket = result.get("ticket")
+    if not isinstance(ticket, dict):
+        raise HTTPException(status_code=502, detail="Invalid ticket response.")
+    if str(ticket.get("requester_email", "")).strip().casefold() != email:
+        raise HTTPException(status_code=404, detail="Ticket not found.")
+    return ticket
+
+
 graph = build_graph()
 approval_store = ApprovalStore()
 ticket_submitter = TicketSubmitter(approval_store)
 session_store = SessionStore()
+conversation_repository = ConversationRepository()
+
+@app.get("/api/knowledge-base")
+async def list_knowledge_documents():
+    """List current, authoritative KB documents for the demo UI."""
+    documents = load_knowledge_base()
+
+    eligible = [
+        doc for doc in documents
+        if doc["metadata"]["status"] == "current"
+        and doc["metadata"]["authoritative"] is True
+    ]
+
+    # Exclude documents superseded by another eligible document.
+    superseded_ids = {
+        old_id
+        for doc in eligible
+        for old_id in (
+            [doc["metadata"].get("supersedes")]
+            if isinstance(doc["metadata"].get("supersedes"), str)
+            else (doc["metadata"].get("supersedes") or [])
+        )
+        if isinstance(old_id, str)
+    }
+
+    result = [
+        {
+            "id": doc["id"],
+            "title": doc["metadata"]["title"],
+            "version": doc["metadata"]["version"],
+            "last_updated": doc["metadata"]["last_updated"],
+            "owner": doc["metadata"]["owner"],
+            "tags": doc["metadata"].get("tags", []),
+            "content": doc["content"],
+        }
+        for doc in eligible
+        if doc["id"] not in superseded_ids
+    ]
+
+    result.sort(key=lambda doc: doc["id"])
+
+    return {
+        "documents": result,
+        "count": len(result),
+    }
+
+@app.get("/api/conversations")
+async def list_conversations(
+    employee_email: str = Query(..., min_length=3),
+):
+    """List saved conversations for a selected demo employee."""
+    email = normalize_demo_email(employee_email)
+
+    return {
+        "conversations": conversation_repository.list_conversations(
+            email,
+            limit=50,
+        )
+    }
 
 
+@app.get("/api/conversations/{session_id}")
+async def get_saved_conversation(
+    session_id: str,
+    employee_email: str = Query(..., min_length=3),
+):
+    """Read a saved conversation belonging to a demo employee."""
+    email = normalize_demo_email(employee_email)
+
+    conversation = conversation_repository.get_conversation(
+        session_id,
+        email,
+    )
+
+    if conversation is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Conversation not found.",
+        )
+
+    return {"conversation": conversation}
 def demo_identity() -> str:
     """Return the server-configured demo identity.
 
@@ -180,12 +354,19 @@ def official_chat(request: ChatRequest):
     awaiting_details = session.get(
         "awaiting_ticket_details", False
     )
-
     session_store.add_message(
         request.session_id,
         "user",
         request.message,
     )
+
+    if session["employee_email"]:
+        conversation_repository.add_message(
+            request.session_id,
+            session["employee_email"],
+            "user",
+            request.message,
+        )
 
     # Keep a short window for LangGraph,
     # but preserve the full session for ticket extraction.
@@ -221,6 +402,13 @@ def official_chat(request: ChatRequest):
             session_store.add_message(
                 request.session_id, "assistant", reply
             )
+            if session["employee_email"]:
+                conversation_repository.add_message(
+                    request.session_id,
+                    session["employee_email"],
+                    "assistant",
+                    reply,
+                )
 
             return {
                 "session_id": request.session_id,
@@ -313,6 +501,13 @@ def official_chat(request: ChatRequest):
         "assistant",
         reply,
     )
+    if session["employee_email"]:
+        conversation_repository.add_message(
+            request.session_id,
+            session["employee_email"],
+            "assistant",
+            reply,
+        )
 
     evidence = result.get("evidence") or []
     citations = list(dict.fromkeys(

@@ -1,0 +1,163 @@
+.employee-identification {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  background:
+    radial-gradient(circle at 15% 20%, #e0e9dc 0%, transparent 35%),
+    radial-gradient(circle at 85% 85%, #e7e9d8 0%, transparent 35%),
+    #f5f2e9;
+  font-family: inherit;
+}
+
+.employee-identification-card {
+  width: 100%;
+  max-width: 470px;
+  background: #fffefa;
+  border: 1px solid #e2e7dc;
+  border-radius: 24px;
+  padding: 44px 40px 32px;
+  box-shadow: 0 24px 70px rgba(36, 71, 53, 0.09);
+}
+
+.employee-identification-icon {
+  width: 62px;
+  height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: #e4ecdf;
+  color: #244735;
+  margin-bottom: 30px;
+}
+
+.employee-identification-heading {
+  margin-bottom: 34px;
+}
+
+.employee-identification-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #78907c;
+}
+
+.employee-identification-heading h1 {
+  margin: 12px 0;
+  color: #244735;
+  font-size: clamp(27px, 4vw, 34px);
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -1px;
+}
+
+.employee-identification-heading p {
+  color: #78867a;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.employee-identification form {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.employee-identification label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #244735;
+}
+
+.employee-email-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #d9e1d7;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 0 15px;
+  color: #8a9b8b;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.employee-email-field:focus-within {
+  border-color: #5b8268;
+  box-shadow: 0 0 0 3px rgba(91, 130, 104, 0.12);
+}
+
+.employee-email-field input {
+  flex: 1;
+  min-width: 0;
+  height: 52px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #244735;
+  font: inherit;
+  font-size: 14px;
+}
+
+.employee-identification form > button {
+  margin-top: 9px;
+  width: 100%;
+  height: 52px;
+  border: none;
+  border-radius: 12px;
+  background: #244735;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.employee-identification form > button:hover:not(:disabled) {
+  background: #345d45;
+  transform: translateY(-1px);
+}
+
+.employee-identification form > button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.employee-identification-error {
+  color: #a33c35;
+  background: #fff0ee;
+  padding: 12px;
+  border-radius: 9px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.employee-identification-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  margin-top: 30px;
+  color: #879589;
+  font-size: 11px;
+}
+
+.employee-spin {
+  animation: employee-spin 1s linear infinite;
+}
+
+@keyframes employee-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 520px) {
+  .employee-identification-card {
+    padding: 32px 24px;
+  }
+}

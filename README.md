@@ -1,5 +1,195 @@
-*Simulated systems for the IT Helpdesk Agent brief of the Agentic AI Bootcamp, organized by Jerusalem High-Tech Foundry (JHF) · in partnership with COMCEC.*
+﻿# TraceDesk AI
 
+**An evidence-driven Agentic AI IT Helpdesk Assistant**
+
+TraceDesk AI is an intelligent IT support assistant that combines retrieval-augmented generation (RAG), LangGraph orchestration, Model Context Protocol (MCP) tools, and human approval to deliver grounded technical support.
+
+Rather than simply generating answers, TraceDesk AI is designed to check trusted company knowledge, consult live helpdesk information, explain the evidence behind its responses, and request explicit employee approval before creating support tickets.
+
+## Key Features
+
+- **Knowledge-grounded assistance:** Retrieves relevant information from the company's official knowledge base, including Markdown and PDF documents.
+- **Policy-aware retrieval:** Prioritizes current, authoritative documents and respects superseded knowledge-base entries.
+- **Incident-aware troubleshooting:** Consults live service status to identify incidents that may affect the employee.
+- **Agentic orchestration:** Uses LangGraph to coordinate request classification, retrieval, tool use, and response generation.
+- **MCP integration:** Connects to the simulated helpdesk system for employee lookup, service status, ticket search, and approved ticket operations.
+- **Human approval gate:** Prepares ticket drafts and requires explicit approval before creating a ticket.
+- **Evidence & Trust Trace:** Presents supporting evidence and relevant decision information without exposing private model reasoning.
+- **Conversation experience:** Includes a React interface with employee identification and conversation-related features.
+- **Voice assistant:** Includes browser-based speech interaction and wake-phrase handling, subject to browser support and recognition limitations.
+
+## Architecture
+
+```text
+Employee
+   |
+   v
+React + Vite Frontend
+   |
+   v
+TraceDesk AI FastAPI Backend (:8000)
+   |
+   v
+LangGraph Agent
+   |
+   +---- RAG Pipeline
+   |       |
+   |       +---- Official Knowledge Base
+   |       +---- Document Filtering
+   |       +---- Embeddings & Retrieval
+   |
+   +---- MCP Client
+   |       |
+   |       +---- Employee Directory
+   |       +---- Service Status
+   |       +---- Historical Tickets
+   |
+   +---- Ticket Draft
+           |
+           v
+      Employee Approval
+           |
+           v
+      MCP create_ticket
+           |
+           v
+Simulated Helpdesk API (:8102)
+```
+
+## Technology Stack
+
+| Layer | Technologies |
+|---|---|
+| Frontend | React, Vite, JavaScript, CSS |
+| Backend | Python, FastAPI |
+| Agent orchestration | LangGraph |
+| Knowledge retrieval | RAG, embeddings, document retrieval |
+| Tool integration | MCP |
+| Language models | OpenRouter-compatible model API |
+| Evaluation | Scenario-based automated tests and LLM Judge |
+| Helpdesk environment | Simulated Nakhla Systems IT Helpdesk |
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.12
+- Node.js and npm compatible with the installed Vite version
+- OpenRouter API key
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/AyaDiab-dev/TraceDesk-AI.git
+cd TraceDesk-AI
+```
+
+### 2. Set up Python
+
+Windows PowerShell:
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+Copy-Item .env.example .env
+```
+
+Configure the required API keys and model settings in `.env`.
+
+Never commit `.env` or actual API credentials.
+
+### 3. Start the simulated Helpdesk API
+
+In the first terminal:
+
+```powershell
+uvicorn services.helpdesk_api:app --port 8102
+```
+
+### 4. Start the TraceDesk AI Backend
+
+In a second terminal, from the repository root with the Python environment activated:
+
+```powershell
+uvicorn services.resolveai_api:app --host 127.0.0.1 --port 8000
+```
+
+### 5. Start the React Frontend
+
+In a third terminal:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Open the local URL displayed by Vite (typically `http://localhost:5173`).
+
+During development, Vite proxies `/api` and `/health` requests to `http://127.0.0.1:8000` by default. Set `API_PROXY_TARGET` before starting Vite if the backend uses a different address.
+
+## Evaluation
+
+TraceDesk AI was evaluated using the bootcamp's official Scenario 2 evaluation runner.
+
+| Evaluation | Recorded result |
+|---|---|
+| Official scenario cases S2-01 through S2-10 | 10/10 passed |
+| Additional LLM Judge checks for S2-02, S2-04, S2-08 | 3/3 passed |
+
+These results were collected from individual saved evaluation runs. They do not represent a single combined evaluation run or guarantee performance on hidden tests.
+
+Example:
+
+```powershell
+python .\evals\run_evals.py --only S2-05 --out evals/local_s2_05
+```
+
+The official evaluation runner and sample scenarios are located in `evals/`.
+
+## Security and Trust
+
+TraceDesk AI follows several important safeguards:
+
+- Ticket creation requires explicit approval.
+- A rejected ticket draft must not create a ticket.
+- Knowledge-base evidence is checked for authority and document precedence.
+- Missing or unsupported information should not be presented as verified fact.
+- Live service information is used when relevant to troubleshooting.
+- Evidence summaries are separate from private model reasoning.
+
+## Limitations
+
+This is an educational demonstration, not a production IT support platform.
+
+- Nakhla Systems, its employees, incidents, and helpdesk data are simulated.
+- Employee identification in the demo must not be treated as production-grade authentication.
+- Voice recognition depends on browser capabilities, microphone permissions, and speech recognition accuracy.
+- Generated responses and ticket drafts should be reviewed before operational use.
+- Passing the provided sample tests does not guarantee passing unseen evaluations.
+
+## Project Structure
+
+```text
+agent/          Agent logic, retrieval, ticket drafting
+services/       FastAPI backend and simulated helpdesk services
+dataset/        Official knowledge base and evaluation data
+frontend/       React and Vite interface
+evals/          Scenario evaluation runner and sample cases
+tests/          Additional local tests
+docs/           Original kit documentation
+```
+
+## Acknowledgments
+
+Developed as an Agentic AI Bootcamp final mini-project, Scenario 2: IT Helpdesk Agent.
+
+The simulated helpdesk environment, Nakhla Systems dataset, MCP server, API contract, and evaluation kit were provided as part of the bootcamp materials.
+
+The original kit README is preserved at `docs/ORIGINAL_KIT_README.md`.
+
+**Version:** v1
 # IT Helpdesk kit
 
 Everything your agent needs around it, so your week goes into the agent:

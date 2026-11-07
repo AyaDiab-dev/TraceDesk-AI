@@ -1,0 +1,37 @@
+
+:root {
+  /* Brand colors */
+  --color-ivory: #F5F2E9;
+  --color-sage: #AEBBAB;
+  --color-forest: #244735;
+
+  /* Supporting colors */
+  --color-forest-dark: #173629;
+  --color-sage-light: #E2E9DE;
+  --color-white: #FFFFFF;
+  --color-text: #20372B;
+  --color-text-muted: #68776C;
+  --color-border: #DCE2D7;
+
+  /* Semantic colors */
+  --color-success: #35805A;
+  --color-warning: #B77932;
+  --color-error: #B84D4D;
+
+  /* Typography */
+  --font-primary: Inter, system-ui, sans-serif;
+
+  /* Shape */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 26px;
+
+  /* Shadows */
+  --shadow-soft: 0 8px 30px rgba(36, 71, 53, 0.08);
+  --shadow-card: 0 18px 50px rgba(36, 71, 53, 0.12);
+
+  /* Motion */
+  --transition-fast: 150ms ease;
+  --transition-normal: 220ms ease;
+}
